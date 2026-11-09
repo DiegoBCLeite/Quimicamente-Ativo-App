@@ -147,6 +147,7 @@ sub,sup{line-height:0}
 .enem{border-color:var(--cobalto)}
 .enem .series{grid-template-columns:repeat(4,minmax(0,1fr))}
 .enem .celula-simbolo{font-size:1.5rem}
+.enem .series.tipos{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (max-width:520px){.enem .series{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ctx{border-left:4px solid var(--cobalto-claro);padding:2px 0 2px 12px;color:var(--grafite);font-size:.98rem}
 .figs{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
@@ -263,11 +264,15 @@ footer{font-size:.8rem;color:var(--grafite);text-align:center}
 
     <div class="bloco stack enem">
       <div><span class="eyebrow">Aba ENEM · sem ranking</span><h2>Simulado ENEM</h2>
-        <p class="note" style="margin-top:4px">Questões inéditas no padrão da prova: situação real, gráfico ou tabela para ler e alternativas montadas a partir dos erros mais comuns. 15 questões, de preferência médias e difíceis, em 45 minutos.</p></div>
+        <p class="note" style="margin-top:4px">Questões inéditas no padrão da prova: situação real, gráfico ou tabela para ler e alternativas montadas a partir dos erros mais comuns. 15 questões em 45 minutos. Escolha o tipo e a série.</p></div>
+      <div class="series tipos" id="escolha-tipo">
+        <button class="celula" data-tipo="normal" aria-pressed="false"><b>Normal</b><span class="d">fáceis, médias e difíceis, 5 de cada</span></button>
+        <button class="celula" data-tipo="desafio" aria-pressed="false"><b>Desafio</b><span class="d">só difíceis, no nível mais alto da prova</span></button>
+      </div>
       <div class="series" id="escolha-enem">
-        <button class="celula" data-enem="1" aria-pressed="false"><span class="celula-simbolo">1º</span><b>1º ano</b><span class="d">20 questões</span></button>
-        <button class="celula" data-enem="2" aria-pressed="false"><span class="celula-simbolo">2º</span><b>2º ano</b><span class="d">20 questões</span></button>
-        <button class="celula" data-enem="3" aria-pressed="false"><span class="celula-simbolo">3º</span><b>3º ano</b><span class="d">20 questões</span></button>
+        <button class="celula" data-enem="1" aria-pressed="false"><span class="celula-simbolo">1º</span><b>1º ano</b><span class="d" data-conta="1"></span></button>
+        <button class="celula" data-enem="2" aria-pressed="false"><span class="celula-simbolo">2º</span><b>2º ano</b><span class="d" data-conta="2"></span></button>
+        <button class="celula" data-enem="3" aria-pressed="false"><span class="celula-simbolo">3º</span><b>3º ano</b><span class="d" data-conta="3"></span></button>
         <button class="celula" data-enem="0" aria-pressed="false"><span class="celula-simbolo">∑</span><b>Misto</b><span class="d">as três séries</span></button>
       </div>
       <div class="row"><button class="btn" id="btn-enem" disabled>Começar o simulado</button></div>
@@ -433,7 +438,7 @@ function som(certa){ if(!SOM) return; try{ AUDIO = AUDIO || new (window.AudioCon
 function marcarSom(){ $('btn-som').setAttribute('aria-pressed', String(SOM)); $('btn-som').textContent = SOM ? '🔊' : '🔇'; $('btn-som').setAttribute('aria-label', SOM ? 'Som ligado' : 'Som desligado'); }
 $('btn-som').addEventListener('click', () => { SOM = !SOM; store('qa-som', SOM); marcarSom(); if(SOM) som(true); });
 
-const estado = {apelido:'', modo:null, serie:null, nivel:null, enem:null, comTempo:true, lista:[], ordens:[], fila:[], pos:0, segundaChance:new Set(),
+const estado = {apelido:'', modo:null, serie:null, nivel:null, enem:null, enemTipo:null, comTempo:true, lista:[], ordens:[], fila:[], pos:0, segundaChance:new Set(),
   respostas:[], sel:null, travado:false, pontos:0, tempoTotal:0, inicio:0, fim:0, timer:null, acabou:false};
 const POUCO_MOVIMENTO = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -469,7 +474,7 @@ function validar(){
   $('btn-desafio').disabled = !temNome || feitos >= DESAFIOS_POR_DIA;
   $('btn-desafio').textContent = temNome && feitos >= DESAFIOS_POR_DIA ? 'Volte amanhã: 3 Desafios por dia' : `Começar o Desafio${temNome ? ` · faltam ${DESAFIOS_POR_DIA - feitos} hoje` : ''}`;
   $('btn-treino').disabled = !(temNome && estado.serie && estado.nivel);
-  $('btn-enem').disabled = !(temNome && estado.enem !== null);
+  $('btn-enem').disabled = !(temNome && estado.enem !== null && estado.enemTipo !== null);
   $('aviso-inicio').textContent = !temNome ? 'Entre com seu nome e turma para começar.' : (estado.serie && estado.nivel ? `Treino: ${SERIES[estado.serie]}, nível ${NIVEIS[estado.nivel].nome.toLowerCase()}.` : 'Para treinar, escolha a série e o nível.');
 }
 
@@ -513,7 +518,9 @@ $('escolha-serie').addEventListener('click', e => { const b=e.target.closest('bu
 $('escolha-nivel').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; estado.nivel=b.dataset.nivel; marcar($('escolha-nivel'),'nivel',estado.nivel); validar(); });
 $('btn-desafio').addEventListener('click', () => iniciar('desafio'));
 $('btn-treino').addEventListener('click', () => iniciar('treino'));
-function nomeEnem(){ return estado.enem ? SERIES[estado.enem] : 'misto'; }
+function nomeEnem(){ return (estado.enemTipo==='desafio' ? 'Desafio' : 'Normal') + ' · ' + (estado.enem ? SERIES[estado.enem] : 'misto'); }
+document.querySelectorAll('[data-conta]').forEach(el => { const s=+el.dataset.conta, b=BANCO_ENEM.filter(q => q.s===s); el.textContent = `${b.length} questões, ${b.filter(q => q.n==='d').length} difíceis`; });
+$('escolha-tipo').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; estado.enemTipo=b.dataset.tipo; marcar($('escolha-tipo'),'tipo',estado.enemTipo); validar(); });
 $('escolha-enem').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; estado.enem=+b.dataset.enem; marcar($('escolha-enem'),'enem',estado.enem); validar(); });
 $('btn-enem').addEventListener('click', () => iniciar('enem'));
 
@@ -532,12 +539,14 @@ function montarDesafio(){
 function iniciar(modo){
   estado.modo = modo;
   if(modo==='desafio'){ if(desafiosHoje() >= DESAFIOS_POR_DIA){ validar(); return; } contarDesafio(); }
-  store('qa-prefs', {serie:estado.serie, nivel:estado.nivel, enem:estado.enem, comTempo:$('usar-tempo').checked});
+  store('qa-prefs', {serie:estado.serie, nivel:estado.nivel, enem:estado.enem, enemTipo:estado.enemTipo, comTempo:$('usar-tempo').checked});
   if(modo==='desafio'){ estado.lista = montarDesafio(); estado.comTempo = true; estado.tempoTotal = DESAFIO.tempo; }
-  else if(modo==='enem'){ // prioridade para médias e difíceis; fáceis só completam se faltar questão (cada série tem 14 médias/difíceis)
-    const pegar = (pool, n) => ordenarPeso(pool.filter(q => q.n!=='f')).concat(ordenarPeso(pool.filter(q => q.n==='f'))).slice(0, n);
-    estado.lista = embaralhar(estado.enem ? pegar(BANCO_ENEM.filter(q => q.s===estado.enem), ENEM.questoes)
-      : [1,2,3].flatMap(s => pegar(BANCO_ENEM.filter(q => q.s===s), ENEM.questoes/3)));   /* misto: 5 de cada série */
+  else if(modo==='enem'){ // Normal: 5 fáceis, 5 médias e 5 difíceis. Desafio: 15 difíceis. Misto: 5 de cada série.
+    const nivel = (s, n, k) => ordenarPeso(BANCO_ENEM.filter(q => q.s===s && q.n===n)).slice(0, k);
+    const cotas = estado.enemTipo==='desafio'
+      ? (estado.enem ? {[estado.enem]:{d:15}} : {1:{d:5}, 2:{d:5}, 3:{d:5}})
+      : (estado.enem ? {[estado.enem]:{f:5, m:5, d:5}} : {1:{f:2, m:2, d:1}, 2:{f:2, m:1, d:2}, 3:{f:1, m:2, d:2}});
+    estado.lista = embaralhar(Object.entries(cotas).flatMap(([s, c]) => Object.entries(c).flatMap(([n, k]) => nivel(+s, n, k))));
     estado.comTempo = true; estado.tempoTotal = ENEM.tempo; }
   else { estado.lista = ordenarPeso(GERAL.filter(q => q.s===estado.serie && q.n===estado.nivel)).slice(0, TREINO_QUESTOES); estado.comTempo = $('usar-tempo').checked; estado.tempoTotal = estado.lista.length * NIVEIS[estado.nivel].tempo; }
   estado.fila = estado.lista.map((_,i) => i); estado.pos = 0; estado.segundaChance = new Set();
@@ -788,6 +797,7 @@ $('btn-ranking-voltar').addEventListener('click', () => mostrar(estado.acabou &&
   if(p.serie){ estado.serie = p.serie; marcar($('escolha-serie'),'serie',p.serie); }
   if(p.nivel){ estado.nivel = p.nivel; marcar($('escolha-nivel'),'nivel',p.nivel); }
   if(p.enem !== undefined && p.enem !== null){ estado.enem = p.enem; marcar($('escolha-enem'),'enem',p.enem); }
+  if(p.enemTipo){ estado.enemTipo = p.enemTipo; marcar($('escolha-tipo'),'tipo',p.enemTipo); }
   validar(); infoHist();
 })();
 </script>
