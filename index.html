@@ -263,17 +263,11 @@ footer{font-size:.8rem;color:var(--grafite);text-align:center}
     </div>
 
     <div class="bloco stack enem">
-      <div><span class="eyebrow">Aba ENEM · sem ranking</span><h2>Simulado ENEM</h2>
-        <p class="note" style="margin-top:4px">Questões inéditas no padrão da prova: situação real, gráfico ou tabela para ler e alternativas montadas a partir dos erros mais comuns. 15 questões em 45 minutos. Escolha o tipo e a série.</p></div>
+      <div><span class="eyebrow">Aba ENEM · vale ranking</span><h2>Simulado ENEM</h2>
+        <p class="note" style="margin-top:4px">Questões inéditas no padrão da prova: situação real, gráfico ou tabela para ler e alternativas montadas a partir dos erros mais comuns. 15 questões das três séries (5 de cada), sem limite de tempo. No ranking vale a maior pontuação; no empate, fica à frente quem terminou em menos tempo.</p></div>
       <div class="series tipos" id="escolha-tipo">
-        <button class="celula" data-tipo="normal" aria-pressed="false"><b>Normal</b><span class="d">fáceis, médias e difíceis, 5 de cada</span></button>
-        <button class="celula" data-tipo="desafio" aria-pressed="false"><b>Desafio</b><span class="d">só difíceis, no nível mais alto da prova</span></button>
-      </div>
-      <div class="series" id="escolha-enem">
-        <button class="celula" data-enem="1" aria-pressed="false"><span class="celula-simbolo">1º</span><b>1º ano</b><span class="d" data-conta="1"></span></button>
-        <button class="celula" data-enem="2" aria-pressed="false"><span class="celula-simbolo">2º</span><b>2º ano</b><span class="d" data-conta="2"></span></button>
-        <button class="celula" data-enem="3" aria-pressed="false"><span class="celula-simbolo">3º</span><b>3º ano</b><span class="d" data-conta="3"></span></button>
-        <button class="celula" data-enem="0" aria-pressed="false"><span class="celula-simbolo">∑</span><b>Misto</b><span class="d">as três séries</span></button>
+        <button class="celula" data-tipo="normal" aria-pressed="false"><b>Normal</b><span class="d">5 fáceis, 5 médias e 5 difíceis</span></button>
+        <button class="celula" data-tipo="desafio" aria-pressed="false"><b>Desafio</b><span class="d">15 difíceis, no nível mais alto da prova</span></button>
       </div>
       <div class="row"><button class="btn" id="btn-enem" disabled>Começar o simulado</button></div>
     </div>
@@ -357,7 +351,8 @@ footer{font-size:.8rem;color:var(--grafite);text-align:center}
   <!-- RANKING -->
   <section id="tela-ranking" class="stack" hidden>
     <div class="bloco stack" style="margin-top:22px">
-      <div class="row" style="justify-content:space-between"><div><span class="eyebrow">Modo Desafio</span><h2>Ranking</h2></div><button class="btn contorno pequeno" id="btn-ranking-voltar">Voltar</button></div>
+      <div class="row" style="justify-content:space-between"><div><span class="eyebrow" id="rk-titulo">Desafio</span><h2>Ranking</h2></div><button class="btn contorno pequeno" id="btn-ranking-voltar">Voltar</button></div>
+      <div class="chips peq" id="rk-modo"><button class="chip" data-v="desafio" aria-pressed="true">Desafio</button><button class="chip" data-v="enem-normal" aria-pressed="false">ENEM Normal</button><button class="chip" data-v="enem-desafio" aria-pressed="false">ENEM Desafio</button></div>
       <div class="abas-rk" role="tablist"><button class="chip" role="tab" data-aba="bimestre" aria-selected="true">Bimestre</button><button class="chip" role="tab" data-aba="lendarios" aria-selected="false">Lendários</button></div>
       <div class="rk-filtros" id="rk-filtros">
         <select class="periodo" id="rk-periodo" aria-label="Período"></select>
@@ -389,7 +384,7 @@ const NIVEIS = {f:{nome:'Fácil', tempo:45, base:100, cor:'--facil'}, m:{nome:'M
 const SERIES = {1:'1º ano', 2:'2º ano', 3:'3º ano'};
 const DESAFIO = {porNivel:{m:6, d:9}, tempo:25*60};   // 15 questões: 2 médias e 3 difíceis de cada série
 const TREINO_QUESTOES = 15;
-const ENEM = {questoes:15, tempo:45*60};
+const ENEM = {questoes:15, tempoMax:4*3600};
 const GERAL = QUESTOES.filter(q => !q.e), BANCO_ENEM = QUESTOES.filter(q => q.e);
 const LETRAS = ['A','B','C','D','E'];
 const $ = id => document.getElementById(id);
@@ -438,7 +433,7 @@ function som(certa){ if(!SOM) return; try{ AUDIO = AUDIO || new (window.AudioCon
 function marcarSom(){ $('btn-som').setAttribute('aria-pressed', String(SOM)); $('btn-som').textContent = SOM ? '🔊' : '🔇'; $('btn-som').setAttribute('aria-label', SOM ? 'Som ligado' : 'Som desligado'); }
 $('btn-som').addEventListener('click', () => { SOM = !SOM; store('qa-som', SOM); marcarSom(); if(SOM) som(true); });
 
-const estado = {apelido:'', modo:null, serie:null, nivel:null, enem:null, enemTipo:null, comTempo:true, lista:[], ordens:[], fila:[], pos:0, segundaChance:new Set(),
+const estado = {apelido:'', modo:null, serie:null, nivel:null, enem:0, enemTipo:null, cronometro:false, comTempo:true, lista:[], ordens:[], fila:[], pos:0, segundaChance:new Set(),
   respostas:[], sel:null, travado:false, pontos:0, tempoTotal:0, inicio:0, fim:0, timer:null, acabou:false};
 const POUCO_MOVIMENTO = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -474,7 +469,7 @@ function validar(){
   $('btn-desafio').disabled = !temNome || feitos >= DESAFIOS_POR_DIA;
   $('btn-desafio').textContent = temNome && feitos >= DESAFIOS_POR_DIA ? 'Volte amanhã: 3 Desafios por dia' : `Começar o Desafio${temNome ? ` · faltam ${DESAFIOS_POR_DIA - feitos} hoje` : ''}`;
   $('btn-treino').disabled = !(temNome && estado.serie && estado.nivel);
-  $('btn-enem').disabled = !(temNome && estado.enem !== null && estado.enemTipo !== null);
+  $('btn-enem').disabled = !(temNome && estado.enemTipo !== null);
   $('aviso-inicio').textContent = !temNome ? 'Entre com seu nome e turma para começar.' : (estado.serie && estado.nivel ? `Treino: ${SERIES[estado.serie]}, nível ${NIVEIS[estado.nivel].nome.toLowerCase()}.` : 'Para treinar, escolha a série e o nível.');
 }
 
@@ -518,10 +513,8 @@ $('escolha-serie').addEventListener('click', e => { const b=e.target.closest('bu
 $('escolha-nivel').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; estado.nivel=b.dataset.nivel; marcar($('escolha-nivel'),'nivel',estado.nivel); validar(); });
 $('btn-desafio').addEventListener('click', () => iniciar('desafio'));
 $('btn-treino').addEventListener('click', () => iniciar('treino'));
-function nomeEnem(){ return (estado.enemTipo==='desafio' ? 'Desafio' : 'Normal') + ' · ' + (estado.enem ? SERIES[estado.enem] : 'misto'); }
-document.querySelectorAll('[data-conta]').forEach(el => { const s=+el.dataset.conta, b=BANCO_ENEM.filter(q => q.s===s); el.textContent = `${b.length} questões, ${b.filter(q => q.n==='d').length} difíceis`; });
+function nomeEnem(){ return estado.enemTipo==='desafio' ? 'Desafio' : 'Normal'; }
 $('escolha-tipo').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; estado.enemTipo=b.dataset.tipo; marcar($('escolha-tipo'),'tipo',estado.enemTipo); validar(); });
-$('escolha-enem').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; estado.enem=+b.dataset.enem; marcar($('escolha-enem'),'enem',estado.enem); validar(); });
 $('btn-enem').addEventListener('click', () => iniciar('enem'));
 
 // Desafio: só médias e difíceis, alternando as séries, primeiro as médias e depois as difíceis.
@@ -539,15 +532,13 @@ function montarDesafio(){
 function iniciar(modo){
   estado.modo = modo;
   if(modo==='desafio'){ if(desafiosHoje() >= DESAFIOS_POR_DIA){ validar(); return; } contarDesafio(); }
-  store('qa-prefs', {serie:estado.serie, nivel:estado.nivel, enem:estado.enem, enemTipo:estado.enemTipo, comTempo:$('usar-tempo').checked});
+  store('qa-prefs', {serie:estado.serie, nivel:estado.nivel, enemTipo:estado.enemTipo, comTempo:$('usar-tempo').checked});
   if(modo==='desafio'){ estado.lista = montarDesafio(); estado.comTempo = true; estado.tempoTotal = DESAFIO.tempo; }
   else if(modo==='enem'){ // Normal: 5 fáceis, 5 médias e 5 difíceis. Desafio: 15 difíceis. Misto: 5 de cada série.
     const nivel = (s, n, k) => ordenarPeso(BANCO_ENEM.filter(q => q.s===s && q.n===n)).slice(0, k);
-    const cotas = estado.enemTipo==='desafio'
-      ? (estado.enem ? {[estado.enem]:{d:15}} : {1:{d:5}, 2:{d:5}, 3:{d:5}})
-      : (estado.enem ? {[estado.enem]:{f:5, m:5, d:5}} : {1:{f:2, m:2, d:1}, 2:{f:2, m:1, d:2}, 3:{f:1, m:2, d:2}});
+    const cotas = estado.enemTipo==='desafio' ? {1:{d:5}, 2:{d:5}, 3:{d:5}} : {1:{f:2, m:2, d:1}, 2:{f:2, m:1, d:2}, 3:{f:1, m:2, d:2}};
     estado.lista = embaralhar(Object.entries(cotas).flatMap(([s, c]) => Object.entries(c).flatMap(([n, k]) => nivel(+s, n, k))));
-    estado.comTempo = true; estado.tempoTotal = ENEM.tempo; }
+    estado.comTempo = false; estado.tempoTotal = ENEM.tempoMax; }   // tempo livre: o relógio só conta para o desempate
   else { estado.lista = ordenarPeso(GERAL.filter(q => q.s===estado.serie && q.n===estado.nivel)).slice(0, TREINO_QUESTOES); estado.comTempo = $('usar-tempo').checked; estado.tempoTotal = estado.lista.length * NIVEIS[estado.nivel].tempo; }
   estado.fila = estado.lista.map((_,i) => i); estado.pos = 0; estado.segundaChance = new Set();
   estado.ordens = estado.lista.map(() => embaralhar([0,1,2,3,4]));   // alternativas embaralhadas em cada questão
@@ -557,7 +548,9 @@ function iniciar(modo){
   $('bureta').hidden = !estado.comTempo;
   estado.inicio = performance.now();
   clearInterval(estado.timer);
+  estado.cronometro = estado.modo==='enem'; $('bureta').hidden = !(estado.comTempo || estado.cronometro); $('tubo').hidden = estado.cronometro;
   if(estado.comTempo){ atualizarTempo(); estado.timer = setInterval(atualizarTempo, 500); }
+  else if(estado.cronometro){ const tic = () => { $('relogio').textContent = mmss((performance.now()-estado.inicio)/1000); }; tic(); estado.timer = setInterval(tic, 500); }
   mostrar('jogo'); renderQuestao();
 }
 
@@ -585,7 +578,7 @@ function renderQuestao(){
   $('hud-nivel').textContent = nv.nome;
   const respondidas = estado.respostas.filter(Boolean).length;
   $('q-num').textContent = `Questão ${respondidas+1} de ${estado.lista.length}`;
-  $('q-tema').innerHTML = q.tema + (estado.modo==='desafio' || (estado.modo==='enem' && !estado.enem) ? ` · ${SERIES[q.s]}` : '');
+  $('q-tema').innerHTML = q.tema + (estado.modo==='desafio' || estado.modo==='enem' ? ` · ${SERIES[q.s]}` : '');
   $('q-pulada').hidden = !estado.segundaChance.has(i);
   $('q-pre').innerHTML = q.pre; $('q-pre').hidden = !q.pre;
   $('q-texto').innerHTML = q.q;
@@ -676,9 +669,9 @@ async function finalizar(){
   const nomeModo = estado.modo==='desafio' ? 'Desafio' : estado.modo==='enem' ? `Simulado ENEM · ${nomeEnem()}` : `Treino · ${SERIES[estado.serie]} · ${NIVEIS[estado.nivel].nome}`;
   $('fim-titulo').textContent = `${estado.apelido} · ${nomeModo}`;
   $('fim-pontos').textContent = final+' pts';
-  $('fim-conta').textContent = estado.comTempo ? `${base} pontos dos acertos + ${bonus} de bônus (${sobra} s restantes × ${acertos}/${total} de acertos)` : `${base} pontos dos acertos (sem cronômetro, sem bônus)`;
+  $('fim-conta').textContent = estado.comTempo ? `${base} pontos dos acertos + ${bonus} de bônus (${sobra} s restantes × ${acertos}/${total} de acertos)` : estado.cronometro ? `${base} pontos dos acertos (fácil 100, média 200, difícil 300). Tempo livre: o tempo só desempata no ranking.` : `${base} pontos dos acertos (sem cronômetro, sem bônus)`;
   $('fim-acertos').textContent = acertos; $('fim-erros').textContent = erros; $('fim-puladas').textContent = semResp;
-  $('fim-tempo').textContent = estado.comTempo ? mmss(usado) : '—';
+  $('fim-tempo').textContent = (estado.comTempo || estado.cronometro) ? mmss(usado) : '—';
   const f = acertos/total;
   $('fim-frase').textContent = sobra<=0 && estado.comTempo && semResp ? 'O tempo acabou antes do fim. As questões que faltaram contam como sem resposta.' : f===1 ? 'Gabaritou! Excelente domínio do conteúdo.' : f>=.75 ? 'Muito bom. Revise as que errou para gabaritar da próxima vez.' : f>=.5 ? 'Metade do caminho. A revisão abaixo mostra onde melhorar.' : 'Vale rever os capítulos indicados em cada questão e tentar de novo.';
   // Resumo de resolução: completo para as erradas e sem resposta; as certas aparecem só como lista.
@@ -696,19 +689,19 @@ async function finalizar(){
   }).join('');
   const certas = estado.respostas.map((r,n) => ({r,n})).filter(x => x.r.status==='certa');
   $('fim-certas').innerHTML = certas.length ? `<h3 style="margin-bottom:8px">Você acertou</h3><div class="acertadas">${certas.map(({r,n}) => `<span>✓ ${n+1}. ${r.q.tema}</span>`).join('')}</div>` : '';
-  $('btn-fim-ranking').hidden = estado.modo!=='desafio';
+  $('btn-fim-ranking').hidden = estado.modo==='treino';
   mostrar('fim');
   const detalhe = estado.modo==='desafio' ? '' : estado.modo==='enem' ? nomeEnem() : `${SERIES[estado.serie]} · ${NIVEIS[estado.nivel].nome}`;
   const reg = {acao:'partida', chave:Date.now().toString(36)+Math.random().toString(36).slice(2,8), id:ALUNO.id, pin:ALUNO.pin, modo:estado.modo, detalhe,
     pontos:final, acertos, total, tempo:Math.round(usado), data:new Date().toISOString(),
     respostas: estado.respostas.map(r => [r.q.id, r.q.tema.replace(/<[^>]+>/g,''), r.q.s, r.q.n, r.status])};
-  if(estado.modo==='desafio') salvarLocal({nome:nomePublico(ALUNO.nome), ano:ALUNO.ano, serie:ALUNO.serie, curso:ALUNO.curso, turno:ALUNO.turno, pontos:final, acertos, total, tempo:reg.tempo, data:reg.data, id:ALUNO.id});
-  const fora = estado.modo==='desafio' ? '' : (estado.modo==='enem' ? 'O simulado ENEM' : 'O treino') + ' não entra no ranking, mas fica registrado para o professor. ';
-  if(!REMOTO){ $('fim-envio').textContent = fora + (estado.modo==='desafio' ? 'Pontuação salva no ranking deste aparelho.' : ''); return; }
+  if(estado.modo!=='treino') salvarLocal(chaveRanking(), {nome:nomePublico(ALUNO.nome), ano:ALUNO.ano, serie:ALUNO.serie, curso:ALUNO.curso, turno:ALUNO.turno, pontos:final, acertos, total, tempo:reg.tempo, data:reg.data, id:ALUNO.id});
+  const fora = estado.modo==='treino' ? 'O treino não entra no ranking, mas fica registrado para o professor. ' : '';
+  if(!REMOTO){ $('fim-envio').textContent = fora + (estado.modo!=='treino' ? 'Pontuação salva no ranking deste aparelho.' : ''); return; }
   const fila = store('qa-fila') || []; fila.push(reg); store('qa-fila', fila);
   $('fim-envio').textContent = fora + 'Enviando…';
   const res = await enviarFila(reg.chave);
-  $('fim-envio').textContent = fora + (res==='ok' ? (estado.modo==='desafio' ? 'Pontuação enviada para o ranking.' : 'Partida enviada.')
+  $('fim-envio').textContent = fora + (res==='ok' ? (estado.modo!=='treino' ? 'Pontuação enviada para o ranking.' : 'Partida enviada.')
     : res==='limite' ? 'Você já tinha 3 Desafios hoje: esta partida não entrou no ranking.'
     : res==='recusada' ? 'O servidor recusou esta partida. Fale com o professor.'
     : 'Sem conexão agora. A partida fica guardada e será enviada quando a internet voltar.');
@@ -738,15 +731,17 @@ async function enviarFila(chave){
 window.addEventListener('online', () => enviarFila());
 
 // ── Ranking: bimestre (com filtros e bimestres anteriores) e Lendários (todos os tempos) ──
-function salvarLocal(r){ const l = store('qa-ranking-desafio') || []; l.push(r); store('qa-ranking-desafio', l.slice(-300)); }
-const RK = {aba:'bimestre', serie:'', curso:'', turno:'', dados:null, fonte:''};
+function chaveRanking(){ return estado.modo==='enem' ? 'enem-' + (estado.enemTipo==='desafio' ? 'desafio' : 'normal') : 'desafio'; }
+function salvarLocal(k, r){ const l = store('qa-ranking-'+k) || []; l.push(r); store('qa-ranking-'+k, l.slice(-300)); }
+const RK_NOMES = {'desafio':'Desafio', 'enem-normal':'Simulado ENEM Normal', 'enem-desafio':'Simulado ENEM Desafio'};
+const RK = {ranking:'desafio', aba:'bimestre', serie:'', curso:'', turno:'', dados:null, fonte:''};
 function melhorPorAluno(lista){ const m = {}; lista.forEach(r => { const k = r.id || r.nome; const a = m[k];
   if(!a || +r.pontos > +a.pontos || (+r.pontos === +a.pontos && +r.tempo < +a.tempo)) m[k] = r; });
   return Object.values(m).sort((a,b) => (b.pontos-a.pontos) || (a.tempo-b.tempo)); }
 async function carregarRanking(periodo){
   RK.dados = null;
-  if(REMOTO){ try{ const res = await fetch(RANKING_URL + (periodo ? '?periodo=' + encodeURIComponent(periodo) : '')); if(res.ok){ RK.dados = await res.json(); RK.fonte = 'Ranking compartilhado de todas as turmas.'; } }catch(e){} }
-  if(!RK.dados){ const l = melhorPorAluno(store('qa-ranking-desafio') || []);
+  if(REMOTO){ try{ const res = await fetch(RANKING_URL + '?ranking=' + RK.ranking + (periodo ? '&periodo=' + encodeURIComponent(periodo) : '')); if(res.ok){ RK.dados = await res.json(); RK.fonte = 'Ranking compartilhado de todas as turmas.'; } }catch(e){} }
+  if(!RK.dados){ const l = melhorPorAluno(store('qa-ranking-'+RK.ranking) || []);
     RK.dados = {periodo:'Este aparelho', atual:'Este aparelho', periodos:[], bimestre:l, lendarios:l.slice(0,10)};
     RK.fonte = REMOTO ? 'Sem conexão com o ranking. Mostrando as partidas deste aparelho.' : 'Prévia: ranking só deste aparelho. O ranking de todas as turmas aparece no link oficial do jogo.'; }
   const sel = $('rk-periodo'), ps = RK.dados.periodos.length ? RK.dados.periodos.slice().reverse() : [RK.dados.periodo];
@@ -756,12 +751,14 @@ async function carregarRanking(periodo){
 function desenharRanking(){
   const ul = $('rk-lista'), d = RK.dados, lend = RK.aba==='lendarios';
   $('rk-filtros').hidden = lend;
-  $('rk-desc').textContent = lend ? 'Os 10 melhores Desafios de todos os tempos, de todas as séries e bimestres. Este ranking nunca é zerado.'
-    : `Melhor Desafio de cada aluno ${d.periodo===d.atual ? 'no período atual' : 'em ' + d.periodo + ' (encerrado)'}. No empate, fica à frente quem terminou em menos tempo.`;
+  const nomeRk = RK_NOMES[RK.ranking];
+  $('rk-titulo').textContent = nomeRk;
+  $('rk-desc').textContent = lend ? `As 10 melhores partidas de todos os tempos no ${nomeRk}, de todas as séries e bimestres. Este ranking nunca é zerado.`
+    : `Melhor partida de cada aluno no ${nomeRk} ${d.periodo===d.atual ? 'no período atual' : 'em ' + d.periodo + ' (encerrado)'}. No empate, fica à frente quem terminou em menos tempo.`;
   let lista = lend ? d.lendarios : d.bimestre.filter(r => (!RK.serie || String(r.serie)===RK.serie) && (!RK.curso || r.curso===RK.curso) && (!RK.turno || r.turno===RK.turno));
   lista = lista.slice(0, lend ? 10 : 50);
   ul.innerHTML = ''; ul.classList.toggle('lendario', lend);
-  if(!lista.length){ const li = document.createElement('li'); li.innerHTML = '<span></span><span class="muted">Ninguém jogou o Desafio aqui ainda. Seja o primeiro!</span><span></span>'; ul.appendChild(li); }
+  if(!lista.length){ const li = document.createElement('li'); li.innerHTML = '<span></span><span class="muted">Ninguém jogou este modo aqui ainda. Seja o primeiro!</span><span></span>'; ul.appendChild(li); }
   const meu = ALUNO ? nomePublico(ALUNO.nome) : null;
   lista.forEach((r,k) => {
     const li = document.createElement('li');
@@ -776,6 +773,8 @@ function desenharRanking(){
 }
 async function abrirRanking(){
   if(!$('tela-jogo').hidden && !estado.acabou) return;
+  if(estado.acabou && estado.modo && estado.modo!=='treino') RK.ranking = chaveRanking();
+  $('rk-modo').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v===RK.ranking)));
   mostrar('ranking');
   $('rk-lista').innerHTML = '<li><span></span><span class="muted">Carregando…</span><span></span></li>';
   await carregarRanking(); desenharRanking();
@@ -785,6 +784,9 @@ document.querySelector('.abas-rk').addEventListener('click', e => { const b = e.
 ['serie','curso','turno'].forEach(g => $('rk-'+g).addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; RK[g] = b.dataset.v;
   $('rk-'+g).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x===b))); if(RK.dados) desenharRanking(); }));
 $('rk-periodo').addEventListener('change', async e => { $('rk-lista').innerHTML = '<li><span></span><span class="muted">Carregando…</span><span></span></li>'; await carregarRanking(e.target.value); desenharRanking(); });
+$('rk-modo').addEventListener('click', async e => { const b = e.target.closest('button'); if(!b) return; RK.ranking = b.dataset.v;
+  $('rk-modo').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x===b)));
+  $('rk-lista').innerHTML = '<li><span></span><span class="muted">Carregando…</span><span></span></li>'; await carregarRanking(); desenharRanking(); });
 $('btn-ver-ranking').addEventListener('click', abrirRanking);
 $('btn-fim-ranking').addEventListener('click', abrirRanking);
 $('btn-ranking-voltar').addEventListener('click', () => mostrar(estado.acabou && estado.lista.length ? 'fim' : 'inicio'));
@@ -796,7 +798,6 @@ $('btn-ranking-voltar').addEventListener('click', () => mostrar(estado.acabou &&
   $('usar-tempo').checked = p.comTempo !== false;
   if(p.serie){ estado.serie = p.serie; marcar($('escolha-serie'),'serie',p.serie); }
   if(p.nivel){ estado.nivel = p.nivel; marcar($('escolha-nivel'),'nivel',p.nivel); }
-  if(p.enem !== undefined && p.enem !== null){ estado.enem = p.enem; marcar($('escolha-enem'),'enem',p.enem); }
   if(p.enemTipo){ estado.enemTipo = p.enemTipo; marcar($('escolha-tipo'),'tipo',p.enemTipo); }
   validar(); infoHist();
 })();
