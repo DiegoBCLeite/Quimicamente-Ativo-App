@@ -214,11 +214,54 @@ footer{font-size:.8rem;color:var(--grafite);text-align:center}
 .acertadas span{background:var(--ok-claro);color:#13704b;border-radius:999px;padding:3px 10px;font-size:.82rem;font-weight:700}
 .hist{font-size:.88rem;color:var(--grafite)}
 @media (prefers-reduced-motion:reduce){.liquido,.btn,.celula{transition:none}.ef-card,#efeito.ruim,.confete,.wrap.tremor{animation:none}.confete{display:none}}
+
+/* Animações de layout (só transform/opacity: leves no celular) */
+.fundo{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.fundo svg{position:absolute;width:var(--t);height:auto;opacity:.07;color:var(--cobalto);animation:flutua var(--d) ease-in-out infinite alternate}
+@keyframes flutua{from{transform:translateY(0) rotate(0)}to{transform:translateY(-38px) rotate(28deg)}}
+.bolha{transform-box:fill-box;transform-origin:center;animation:sobe 2.4s ease-in infinite;opacity:0}
+.bolha:nth-of-type(2){animation-delay:.8s}.bolha:nth-of-type(3){animation-delay:1.6s}
+@keyframes sobe{0%{transform:translateY(0) scale(.6);opacity:0}20%{opacity:.95}100%{transform:translateY(-15px) scale(1.1);opacity:0}}
+.entra>*{animation:aparece .45s cubic-bezier(.2,.8,.3,1) both}
+.entra>*:nth-child(2){animation-delay:.06s}.entra>*:nth-child(3){animation-delay:.12s}.entra>*:nth-child(4){animation-delay:.18s}.entra>*:nth-child(5){animation-delay:.24s}.entra>*:nth-child(n+6){animation-delay:.3s}
+@keyframes aparece{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.desafio{position:relative;overflow:hidden}
+.desafio::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.18) 50%,transparent 65%);transform:translateX(-100%);animation:brilho 5s ease-in-out 1.2s infinite;pointer-events:none}
+@keyframes brilho{0%,70%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+#btn-desafio:not(:disabled){animation:pulsa 2.2s ease-in-out infinite}
+@keyframes pulsa{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+#btn-desafio:active{animation:none}
+.q-anim{animation:desliza .35s cubic-bezier(.2,.8,.3,1) both}
+@keyframes desliza{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+.opts .opt{animation:aparece .35s cubic-bezier(.2,.8,.3,1) both}
+.opts .opt:nth-child(2){animation-delay:.05s}.opts .opt:nth-child(3){animation-delay:.1s}.opts .opt:nth-child(4){animation-delay:.15s}.opts .opt:nth-child(5){animation-delay:.2s}
+.opt{transition:border-color .15s,background-color .15s,transform .12s}
+.opt:active:not(:disabled){transform:scale(.98)}
+.opt.sel .el{animation:estala .28s cubic-bezier(.2,1.6,.4,1)}
+@keyframes estala{from{transform:scale(.7)}to{transform:scale(1)}}
+.opt.right{animation:estala .35s cubic-bezier(.2,1.6,.4,1)}
+.progresso i{transition:background-color .3s}
+.progresso i.now{animation:vez 1.2s ease-in-out infinite}
+@keyframes vez{50%{opacity:.45}}
+.tubo.baixo{animation:alerta 1s ease-in-out infinite}
+@keyframes alerta{50%{transform:scale(1.03)}}
+.pontos.sobe{animation:estala .4s cubic-bezier(.2,1.6,.4,1)}
+.big{animation:surge .5s cubic-bezier(.2,1.6,.4,1) both}
+.stats .stat{animation:aparece .4s cubic-bezier(.2,.8,.3,1) both}
+.stats .stat:nth-child(2){animation-delay:.08s}.stats .stat:nth-child(3){animation-delay:.16s}.stats .stat:nth-child(4){animation-delay:.24s}
+.rank li{animation:aparece .35s cubic-bezier(.2,.8,.3,1) both}
+.rank li:nth-child(2){animation-delay:.04s}.rank li:nth-child(3){animation-delay:.08s}.rank li:nth-child(4){animation-delay:.12s}.rank li:nth-child(5){animation-delay:.16s}.rank li:nth-child(n+6){animation-delay:.2s}
+.rank li:nth-child(-n+3) .pos{display:inline-block;animation:medalha 2.6s ease-in-out infinite}
+@keyframes medalha{0%,80%,100%{transform:none}88%{transform:rotate(-12deg) scale(1.15)}94%{transform:rotate(8deg) scale(1.1)}}
+.celula,.chip,.nivel{transition:transform .12s,border-color .15s,background-color .15s}
+.chip:active,.nivel:active,.celula:active{transform:scale(.96)}
+@media (prefers-reduced-motion:reduce){.fundo,.bolha{display:none}.entra>*,.q-anim,.opts .opt,.opt.sel .el,.opt.right,.progresso i.now,.tubo.baixo,.pontos.sobe,.big,.stats .stat,.rank li,.rank li .pos,.desafio::after,#btn-desafio{animation:none!important}}
 </style>
 
+<div class="fundo" aria-hidden="true"><svg viewBox="0 0 40 46" style="left:4%;top:14%;--t:70px;--d:9s"><path d="M20 2L38 12.5V33.5L20 44L2 33.5V12.5Z" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="23" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg><svg viewBox="0 0 40 46" style="left:84%;top:8%;--t:54px;--d:11s"><path d="M20 2L38 12.5V33.5L20 44L2 33.5V12.5Z" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="23" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg><svg viewBox="0 0 40 46" style="left:78%;top:58%;--t:84px;--d:13s"><path d="M20 2L38 12.5V33.5L20 44L2 33.5V12.5Z" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="23" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg><svg viewBox="0 0 40 46" style="left:8%;top:72%;--t:48px;--d:10s"><path d="M20 2L38 12.5V33.5L20 44L2 33.5V12.5Z" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="23" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg><svg viewBox="0 0 40 46" style="left:46%;top:88%;--t:60px;--d:12s"><path d="M20 2L38 12.5V33.5L20 44L2 33.5V12.5Z" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="20" cy="23" r="9" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
 <header class="topo"><div class="in">
   <button class="marca" id="btn-marca" aria-label="Quimicamente Ativo, início">
-    <svg viewBox="0 0 44 52" aria-hidden="true"><path d="M10.5 32H33.5L39 44Q40 48 36 48H8Q4 48 5 44Z" fill="#2350d8"/><path d="M15 4H29M17 4V18L5 44Q4 48 8 48H36Q40 48 39 44L27 18V4" fill="none" stroke="#13213c" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 44 52" aria-hidden="true"><path d="M10.5 32H33.5L39 44Q40 48 36 48H8Q4 48 5 44Z" fill="#2350d8"/><circle class="bolha" cx="18" cy="40" r="2.2" fill="#fff"/><circle class="bolha" cx="25" cy="42" r="1.7" fill="#fff"/><circle class="bolha" cx="21" cy="38" r="1.4" fill="#fff"/><path d="M15 4H29M17 4V18L5 44Q4 48 8 48H36Q40 48 39 44L27 18V4" fill="none" stroke="#13213c" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Quimicamente Ativo
   </button>
   <div class="row" style="gap:8px;flex-wrap:nowrap;flex:none"><button class="btn contorno pequeno" id="btn-som" aria-pressed="false" aria-label="Som desligado" title="Som de acerto e erro">🔇</button><button class="btn contorno pequeno" id="btn-ver-ranking">Ranking</button></div>
@@ -259,7 +302,7 @@ footer{font-size:.8rem;color:var(--grafite);text-align:center}
         <div class="fatos"><span>1º, 2º e 3º ano</span><span>6 médias · 9 difíceis</span><span>25 min</span></div>
         <div class="row" style="margin-top:16px"><button class="btn" id="btn-desafio" disabled>Começar o Desafio</button></div>
       </div>
-      <svg viewBox="0 0 44 52" aria-hidden="true"><path d="M10.5 32H33.5L39 44Q40 48 36 48H8Q4 48 5 44Z" fill="#ffffff"/><path d="M15 4H29M17 4V18L5 44Q4 48 8 48H36Q40 48 39 44L27 18V4" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>
+      <svg viewBox="0 0 44 52" aria-hidden="true"><path d="M10.5 32H33.5L39 44Q40 48 36 48H8Q4 48 5 44Z" fill="#ffffff"/><circle class="bolha" cx="18" cy="40" r="2.2" fill="#2350d8"/><circle class="bolha" cx="25" cy="42" r="1.7" fill="#2350d8"/><circle class="bolha" cx="21" cy="38" r="1.4" fill="#2350d8"/><path d="M15 4H29M17 4V18L5 44Q4 48 8 48H36Q40 48 39 44L27 18V4" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>
     </div>
 
     <div class="bloco stack enem">
@@ -457,7 +500,13 @@ function infoHist(){
 }
 
 function store(k, v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
-function mostrar(t){ ['inicio','jogo','fim','ranking'].forEach(x => $('tela-'+x).hidden = (x!==t)); window.scrollTo(0,0); }
+function contarAte(el, alvo){
+  if(POUCO_MOVIMENTO || !alvo){ el.textContent = alvo+' pts'; return; }
+  const t0 = performance.now(), dur = 1100;
+  const passo = agora => { const f = Math.min(1,(agora-t0)/dur), v = Math.round(alvo*(1-Math.pow(1-f,3))); el.textContent = v+' pts'; if(f<1) requestAnimationFrame(passo); };
+  requestAnimationFrame(passo);
+}
+function mostrar(t){ ['inicio','jogo','fim','ranking'].forEach(x => { const e = $('tela-'+x); e.hidden = (x!==t); e.classList.remove('entra'); }); const e = $('tela-'+t); void e.offsetWidth; e.classList.add('entra'); window.scrollTo(0,0); }
 function embaralhar(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function mmss(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
 function marcar(g, attr, v){ g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset[attr]===String(v)))); }
@@ -582,6 +631,7 @@ function renderQuestao(){
   $('q-pulada').hidden = !estado.segundaChance.has(i);
   $('q-pre').innerHTML = q.pre; $('q-pre').hidden = !q.pre;
   $('q-texto').innerHTML = q.q;
+  { const art = $('q-texto').closest('article'); art.classList.remove('q-anim'); void art.offsetWidth; art.classList.add('q-anim'); }
   $('q-opcoes').innerHTML = estado.ordens[i].map((k,pos) => `<button class="opt${q.afig?' fig':''}" data-k="${k}" aria-pressed="false"><span class="el">${LETRAS[pos]}</span><span class="tx">${q.a[k]}</span></button>`).join('');
   estado.sel = null; estado.travado = false;
   $('btn-confirmar').disabled = true; $('btn-pular').disabled = false;
@@ -606,7 +656,7 @@ function responder(k){
   estado.pontos += ganho;
   estado.respostas[i] = {k, status: certa?'certa':'errada', q, ordem: estado.ordens[i]};
   registrar(q, certa?'certa':'errada');
-  $('hud-pontos').textContent = estado.pontos;
+  $('hud-pontos').textContent = estado.pontos; { const p = document.querySelector('.pontos'); p.classList.remove('sobe'); void p.offsetWidth; p.classList.add('sobe'); }
   // Durante o jogo só se mostra se a escolha foi certa ou errada; a correta e a resolução ficam para o fim.
   document.querySelectorAll('#q-opcoes .opt').forEach(b => { b.disabled = true; b.classList.remove('sel'); if(+b.dataset.k===k) b.classList.add(certa?'right':'wrong'); else b.classList.add('dim'); });
   $('btn-confirmar').disabled = true; $('btn-pular').disabled = true;
@@ -668,7 +718,7 @@ async function finalizar(){
   const base = estado.pontos, final = base + bonus;
   const nomeModo = estado.modo==='desafio' ? 'Desafio' : estado.modo==='enem' ? `Simulado ENEM · ${nomeEnem()}` : `Treino · ${SERIES[estado.serie]} · ${NIVEIS[estado.nivel].nome}`;
   $('fim-titulo').textContent = `${estado.apelido} · ${nomeModo}`;
-  $('fim-pontos').textContent = final+' pts';
+  contarAte($('fim-pontos'), final);
   $('fim-conta').textContent = estado.comTempo ? `${base} pontos dos acertos + ${bonus} de bônus (${sobra} s restantes × ${acertos}/${total} de acertos)` : estado.cronometro ? `${base} pontos dos acertos (fácil 100, média 200, difícil 300). Tempo livre: o tempo só desempata no ranking.` : `${base} pontos dos acertos (sem cronômetro, sem bônus)`;
   $('fim-acertos').textContent = acertos; $('fim-erros').textContent = erros; $('fim-puladas').textContent = semResp;
   $('fim-tempo').textContent = (estado.comTempo || estado.cronometro) ? mmss(usado) : '—';
